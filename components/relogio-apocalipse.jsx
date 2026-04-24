@@ -105,39 +105,40 @@ function fmtDuration(ms) {
 }
 
 // ═══════════════════════════════════════════
-// FEEDS + AI
 // ═══════════════════════════════════════════
-const FEEDS = [
-  "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://feeds.bbci.co.uk/portuguese/rss.xml"),
-  "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://rss.dw.com/rdf/rss-port-all"),
-];
-function parseRSS(xml) {
-  try {
-    const doc = new DOMParser().parseFromString(xml, "text/xml");
-    return Array.from(doc.querySelectorAll("item")).slice(0,7)
-      .map(i => ({ title: i.querySelector("title")?.textContent || "" })).filter(i => i.title);
-  } catch { return []; }
-}
+// FEEDS + AI — via API Route do servidor
+// ═══════════════════════════════════════════
 async function fetchFeeds() {
-  const all = [];
-  for (const u of FEEDS) {
-    try { const r = await fetch(u, { signal: AbortSignal.timeout(6000) }); all.push(...parseRSS(await r.text())); } catch {}
+  try {
+    const res = await fetch("/api/oracle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "fetchNews" }),
+      signal: AbortSignal.timeout(10000),
+    });
+    const data = await res.json();
+    const headlines = data.headlines || [];
+    return headlines.map((t) => ({ title: t }));
+  } catch {
+    return [];
   }
-  return all.slice(0, 8);
 }
+
 async function callOracle(items) {
-  const hl = items.map((it, i) => `${i+1}. ${it.title}`).join("\n");
-  const res = await fetch("/api/oracle", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514", max_tokens: 1600,
-      system: `Você é o ALGORITMO CRONOS. Analise manchetes e calcule impacto no prazo de extinção humana. Responda SOMENTE JSON válido sem markdown. {"ajuste_segundos":inteiro -20 a 30,"veredicto":"frase sombria precisa","ticker":"manchete dramática curta","violencia_br":0-100,"previsoes":[{"titulo":"MAIÚSCULAS máx 7 palavras","manchete_real":"resumida","interpretacao":"2-3 frases apocalípticas","impacto_anos":decimal,"categoria":"NUCLEAR|CLIMA|IA|BIOLÓGICO|GEOPOLÍTICO|CÓSMICO","probabilidade":1-99,"gravidade":1-10}]}`,
-      messages: [{ role: "user", content: `Analise:\n${hl}` }],
-    }),
-  });
-  const d = await res.json();
-  const t = d.content?.map(c => c.text || "").join("") || "{}";
-  try { return JSON.parse(t.replace(/```json|```/g,"").trim()); } catch { return null; }
+  try {
+    const headlines = items.map((it) => it.title);
+    const res = await fetch("/api/oracle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "analyze", headlines }),
+      signal: AbortSignal.timeout(30000),
+    });
+    const data = await res.json();
+    if (data.success) return data;
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 // ═══════════════════════════════════════════
