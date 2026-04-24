@@ -476,7 +476,7 @@ export default function App() {
     try {
       const items = await fetchFeeds();
       const oracleResult = await callOracle(items.length ? items : []);
-const r = (oracleResult && oracleResult.success) ? oracleResult : MOCK;
+      const r = (oracleResult && oracleResult.success) ? oracleResult : MOCK;
       const newS = Math.max(10, Math.min(HOUR_S-10, seconds + (r.ajuste_segundos||0)));
       if (r.ticker) setTickerText(r.ticker.toUpperCase());
       if (r.violencia_br) setViolencia(r.violencia_br);
