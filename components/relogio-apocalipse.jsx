@@ -127,7 +127,7 @@ async function fetchFeeds() {
 }
 async function callOracle(items) {
   const hl = items.map((it, i) => `${i+1}. ${it.title}`).join("\n");
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch("/api/oracle", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514", max_tokens: 1600,
