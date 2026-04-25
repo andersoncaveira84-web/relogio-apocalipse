@@ -94,10 +94,7 @@ Formato exato:
       "gravidade": número inteiro de 1 a 10
     }
   ]
-}
-ajuste_segundos positivo = relógio avança (mais perigoso).
-impacto_anos positivo = aproxima o apocalipse, negativo = afasta.
-Seja científico, sombrio e preciso. Terror plausível baseado nos fatos reais.`,
+}`,
           messages: [{
             role: "user",
             content: `Analise estas manchetes reais de hoje para o Relógio do Juízo Final:\n\n${hl}`,
@@ -118,9 +115,18 @@ Seja científico, sombrio e preciso. Terror plausível baseado nos fatos reais.`
         const parsed = JSON.parse(jsonMatch[0]);
         return NextResponse.json({ success: true, ...parsed });
       } catch {
-        return NextResponse.json({ success: true, ajuste_segundos: 5, veredicto: "Ameaças globais em escalada.", ticker: "ALERTAS GLOBAIS DETECTADOS", violencia_br: 70, previsoes: [{ titulo: "AMEAÇAS GLOBAIS EM ALTA", manchete_real: "Múltiplos vetores de risco detectados", interpretacao: "Análise de risco indica escalada simultânea de ameaças nucleares, climáticas e tecnológicas sem precedentes históricos.", impacto_anos: 3.5, categoria: "GEOPOLÍTICO", probabilidade: 78, gravidade: 8 }] });
+        return NextResponse.json({ 
+          success: true, 
+          ajuste_segundos: 5, 
+          veredicto: "Ameaças globais em escalada.", 
+          ticker: "ALERTAS GLOBAIS DETECTADOS", 
+          violencia_br: 70, 
+          previsoes: [{ titulo: "AMEAÇAS GLOBAIS EM ALTA", manchete_real: "Múltiplos vetores de risco detectados", interpretacao: "Análise de risco indica escalada simultânea de ameaças.", impacto_anos: 3.5, categoria: "GEOPOLÍTICO", probabilidade: 78, gravidade: 8 }] 
+        });
       }
+    }
 
+    // Caso a ação não seja reconhecida
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 
   } catch (e) {
