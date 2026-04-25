@@ -95,7 +95,7 @@ function fmtDuration(ms) {
 }
 
 // ═══════════════════════════════════════════
-// ORACLE — chama a API da Anthropic diretamente
+// ORACULO — chama a API da Anthropic diretamente
 // -----------------------------------------------
 // COMO CONFIGURAR:
 //   1. Gere uma chave em https://console.anthropic.com/settings/keys
