@@ -128,49 +128,71 @@ function PredCard({ ev, active, onToggle }) {
 }
 
 // ═══════════════════════════════════════════
+// NOVO COMPONENTE: MANCHETES EM DESTAQUE
+// ═══════════════════════════════════════════
+function HeadlinesSection({ news, onSelect }) {
+  if (!news || news.length === 0) return null;
+  return (
+    <div style={{ marginTop: 24, marginBottom: 24 }}>
+      <div style={{ fontSize: 13, letterSpacing: 4, color: C.goldDim, fontFamily: "Courier New,monospace", marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
+        <span>MANCHETES CRÍTICAS</span>
+        <div style={{ flex: 1, height: 1, background: C.border }}/>
+      </div>
+      <div style={{ display: "grid", gap: 10 }}>
+        {news.map((item, idx) => (
+          <div key={idx} onClick={() => onSelect(idx)}
+            style={{ background: C.bgCard, border: `1px solid ${C.border}`, padding: "14px", cursor: "pointer", transition: "all 0.2s", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = C.goldDim}
+            onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
+            <div>
+              <div style={{ fontSize: 10, color: CAT_COLOR[item.categoria] || C.red, fontFamily: "Courier New,monospace", marginBottom: 4 }}>{item.categoria}</div>
+              <div style={{ fontSize: 14, color: C.white, fontWeight: "bold" }}>{item.manchete_real}</div>
+            </div>
+            <div style={{ color: C.red, fontSize: 18 }}>▶</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
 // MAIN APP
 // ═══════════════════════════════════════════
 export default function App() {
   const [seconds, setSeconds] = useState(OFFICIAL_S);
-  const [previsoes, setPrevisoes] = useState(MOCK.previsoes); // Começa com Mock para não ficar vazio
+  const [previsoes, setPrevisoes] = useState(MOCK.previsoes);
   const [veredicto, setVeredicto] = useState(MOCK.veredicto);
   const [tickerText, setTickerText] = useState(MOCK.ticker);
   const [loading, setLoading] = useState(false);
   const [activeIdx, setActiveIdx] = useState(null);
   const [page, setPage] = useState("relogio");
   const [oracMsg, setOracMsg] = useState("");
+  const [mounted, setMounted] = useState(false);
 
-  // Efeito para carregar notícias automaticamente ao abrir o site
   useEffect(() => {
-    const autoFetch = async () => {
-      setLoading(true);
-      setOracMsg("SINCRONIZANDO DADOS...");
-      try {
-        // Simulação de chamada de API (Substituir pela sua lógica de fetch real)
-        // const res = await fetch("/api/oracle", { ... });
-        // const data = await res.json();
-        // Se falhar ou não houver API, o MOCK já está no estado inicial
-      } catch (e) {
-        console.log("Usando dados locais.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    autoFetch();
+    setMounted(true);
   }, []);
 
   async function consult() {
     if (loading) return;
     setLoading(true);
     setOracMsg(LOADING_MSGS[Math.floor(Math.random() * LOADING_MSGS.length)]);
-    
-    // Simula atraso de rede
-    setTimeout(() => {
-        setPrevisoes(MOCK.previsoes);
-        setVeredicto(MOCK.veredicto);
-        setLoading(false);
-    }, 1500);
+    try {
+      const res = await fetch("/api/oracle", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ action: "fetchNews" }) });
+      const data = await res.json();
+      if (data && data.previsoes) {
+        setPrevisoes(data.previsoes);
+        setVeredicto(data.veredicto);
+      }
+    } catch (e) {
+      setPrevisoes(MOCK.previsoes);
+    } finally {
+      setLoading(false);
+    }
   }
+
+  if (!mounted) return <div style={{ background: C.bg, minHeight: "100vh" }} />;
 
   const pd = predYear(seconds);
   const yl = yearsLeft(seconds);
@@ -178,34 +200,23 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.gray, fontFamily: "Georgia,serif" }}>
       <NewsTicker text={tickerText}/>
-
       <main style={{ maxWidth: 800, margin: "0 auto", padding: "20px" }}>
-        
-        {/* NAVEGAÇÃO */}
         <nav style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 30 }}>
             <button onClick={() => setPage("relogio")} style={{ background: "none", border: "none", color: page === "relogio" ? C.red : C.gray, cursor: "pointer", fontFamily: "Courier New" }}>RELÓGIO</button>
-            <button onClick={() => setPage("oraculo")} style={{ background: "none", border: "none", color: page === "oraculo" ? C.red : C.gray, cursor: "pointer", fontFamily: "Courier New" }}>DETALHES</button>
+            <button onClick={() => setPage("oraculo")} style={{ background: "none", border: "none", color: page === "oraculo" ? C.red : C.gray, cursor: "pointer", fontFamily: "Courier New" }}>ORÁCULO</button>
         </nav>
 
         {page === "relogio" && (
           <>
-            {/* Bloco de Previsão */}
             <div style={{ border: `1px solid ${C.red}55`, background: C.bgCard, padding: "22px", textAlign: "center" }}>
                 <div style={{ fontSize: 12, color: C.redDim, letterSpacing: 4 }}>DATA PREVISTA DO COLAPSO</div>
                 <div style={{ fontSize: 80, fontWeight: "bold", color: C.red }}>{pd.y}</div>
                 <div style={{ fontSize: 14, color: C.gray }}>{yl.toFixed(1)} ANOS RESTANTES</div>
             </div>
 
-            {/* NOVA SEÇÃO DE NOTÍCIAS NA HOME */}
-            <HeadlinesSection 
-                news={previsoes} 
-                onSelect={(idx) => { setActiveIdx(idx); setPage("oraculo"); }} 
-            />
+            <HeadlinesSection news={previsoes} onSelect={(idx) => { setActiveIdx(idx); setPage("oraculo"); }} />
 
-            <button onClick={consult} disabled={loading} style={{
-              width: "100%", background: C.bgDark, border: `1px solid ${C.red}`,
-              color: C.red, padding: "18px", cursor: "pointer", marginTop: 20
-            }}>
+            <button onClick={consult} disabled={loading} style={{ width: "100%", background: C.bgDark, border: `1px solid ${C.red}`, color: C.red, padding: "18px", cursor: "pointer", marginTop: 20 }}>
               {loading ? oracMsg : "◈ CONSULTAR O ORÁCULO"}
             </button>
           </>
@@ -213,7 +224,7 @@ export default function App() {
 
         {page === "oraculo" && (
           <div>
-            <div style={{ marginBottom: 20, color: C.gold }}>{veredicto}</div>
+            <div style={{ marginBottom: 20, color: C.gold, fontStyle: "italic" }}>{veredicto}</div>
             {previsoes.map((ev, i) => (
               <PredCard key={i} ev={ev} active={activeIdx === i} onToggle={() => setActiveIdx(activeIdx === i ? null : i)}/>
             ))}
