@@ -107,7 +107,7 @@ Formato exato:
 
       try {
         const clean = text
-          .replace(/```json/gi, "")
+         .replace(/```json/gi, "")
           .replace(/```/g, "")
           .trim();
         const jsonMatch = clean.match(/\{[\s\S]*\}/);
