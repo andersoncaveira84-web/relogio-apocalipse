@@ -1,6 +1,5 @@
-bash
+"use client";
 
-cat > /mnt/user-data/outputs/App.jsx << 'ENDOFFILE'
 import { useState, useEffect, useRef } from "react";
 
 // ═══════════════════════════════════════════
@@ -60,16 +59,15 @@ const AFFILIATES = [
   { icon: "☢", name: "Dosímetro de Radiação Pessoal", cat: "NUCLEAR", store: "Amazon", link: "https://amzn.to/seu-link" },
 ];
 
-// Dados de demonstração — usados quando não há chave API configurada
 const MOCK = {
   ajuste_segundos: 7,
   veredicto: "A convergência de ameaças nucleares, colapso climático e IA não regulada cria vetor de extinção sem precedentes históricos.",
   ticker: "ARSENAIS NUCLEARES EXPANDEM SIMULTANEAMENTE · IA MILITAR SEM SUPERVISÃO · TEMPERATURA GLOBAL BATE RECORDE",
   violencia_br: 73,
   previsoes: [
-    { titulo: "ARSENAIS NUCLEARES EM EXPANSÃO", manchete_real: "Potências expandem ogivas sem tratados ativos", interpretacao: "Três potências expandem arsenais simultaneamente. Probabilidade de conflito acidental: 34% em 18 anos. Tempo de resposta reduzido a 4 minutos.", impacto_anos: 3.2, categoria: "NUCLEAR", probabilidade: 72, gravidade: 9 },
-    { titulo: "IA MILITAR SEM APROVAÇÃO HUMANA", manchete_real: "Sistemas autônomos operam sem loop humano", interpretacao: "Primeiro armamento autônomo com IA sem aprovação humana documentado. Tempo de escalada cai de 72h para 11 minutos em conflito real.", impacto_anos: 4.7, categoria: "IA", probabilidade: 61, gravidade: 10 },
-    { titulo: "RECORDE DE TEMPERATURA GLOBAL", manchete_real: "2025 é o ano mais quente da história", interpretacao: "Terceiro ano consecutivo de recordes absolutos. Colapso agrícola global revisado para 2041, 9 anos antes da estimativa anterior.", impacto_anos: 2.1, categoria: "CLIMA", probabilidade: 89, gravidade: 8 },
+    { titulo: "ARSENAIS NUCLEARES EM EXPANSÃO", manchete_real: "Potências expandem ogivas sem tratados ativos", interpretacao: "Três potências expandem arsenais simultaneamente. Probabilidade de conflito acidental: 34% em 18 anos.", impacto_anos: 3.2, categoria: "NUCLEAR", probabilidade: 72, gravidade: 9 },
+    { titulo: "IA MILITAR SEM APROVAÇÃO HUMANA", manchete_real: "Sistemas autônomos operam sem loop humano", interpretacao: "Primeiro armamento autônomo com IA sem aprovação humana documentado. Tempo de escalada cai de 72h para 11 minutos.", impacto_anos: 4.7, categoria: "IA", probabilidade: 61, gravidade: 10 },
+    { titulo: "RECORDE DE TEMPERATURA GLOBAL", manchete_real: "2025 é o ano mais quente da história", interpretacao: "Terceiro ano consecutivo de recordes absolutos. Colapso agrícola global revisado para 2041.", impacto_anos: 2.1, categoria: "CLIMA", probabilidade: 89, gravidade: 8 },
   ],
 };
 
@@ -83,7 +81,7 @@ function predYear(s) {
   const M = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
   return { y, m: M[Math.floor((yr - y) * 12)], full: yr };
 }
-function getMidMs() { const n = new Date(), m = new Date(n); m.setHours(24,0,0,0); return m - n; }
+function getMidMs() { const n = new Date(), m = new Date(n); m.setHours(24,0,0,0); return m.getTime() - n.getTime(); }
 function padZ(n, l = 2) { return String(n).padStart(l, "0"); }
 function fmtMs(ms) {
   const s = Math.floor(ms / 1000);
@@ -95,16 +93,7 @@ function fmtDuration(ms) {
 }
 
 // ═══════════════════════════════════════════
-// ORACULO — chama a API da Anthropic diretamente
-// -----------------------------------------------
-// COMO CONFIGURAR:
-//   1. Gere uma chave em https://console.anthropic.com/settings/keys
-//   2. Cole a chave no campo que aparece no topo do site (ela é salva no localStorage)
-//   3. Sem chave, o site usa os dados de demonstração (MOCK)
-//
-// PRODUÇÃO / SEGURANÇA:
-//   Para deploy público, mova a chamada para um backend (ex: Next.js API Route,
-//   Supabase Edge Function, Cloudflare Worker) para não expor a chave no front-end.
+// ORACLE API CALL
 // ═══════════════════════════════════════════
 async function callAnthropicOracle(apiKey) {
   const systemPrompt = `Você é o Oráculo do Relógio do Juízo Final. Analise o estado atual do mundo em 2026 e retorne APENAS um JSON válido (sem markdown, sem texto extra) com esta estrutura:
@@ -163,7 +152,11 @@ function SteampunkClock({ seconds, glitch, pulse }) {
   const fraction = seconds / HOUR_S;
   const handRad = (-(fraction * 360) - 90) * Math.PI / 180;
   const [gearAngle, setGearAngle] = useState(0);
-  useEffect(() => { const t = setInterval(() => setGearAngle(a => a + 0.4), 50); return () => clearInterval(t); }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setGearAngle(a => a + 0.4), 50);
+    return () => clearInterval(t);
+  }, []);
 
   function GearPath({ x, y, r, teeth, angle }) {
     let d = "";
@@ -205,15 +198,15 @@ function SteampunkClock({ seconds, glitch, pulse }) {
       {[0,90,180,270].map(a => { const rad=a*Math.PI/180; return <circle key={a} cx={cx+Math.cos(rad)*R*0.93} cy={cy+Math.sin(rad)*R*0.93} r={R*0.024} fill="#8b6020" stroke="#6b4a10" strokeWidth="1"/>; })}
       <circle cx={cx} cy={cy} r={R*0.95} fill="url(#cEng)" opacity="0.35"/>
       {gears.map((g, i) => <GearPath key={i} x={g.x} y={g.y} r={g.r} teeth={g.teeth} angle={gearAngle*g.speed*Math.PI/180}/>)}
-      {gears.map((g, i) => <circle key={i} cx={g.x} cy={g.y} r={g.r*0.28} fill="#5a3a10" stroke="#8b6020" strokeWidth="0.8"/>)}
+      {gears.map((g, i) => <circle key={`gc-${i}`} cx={g.x} cy={g.y} r={g.r*0.28} fill="#5a3a10" stroke="#8b6020" strokeWidth="0.8"/>)}
       <circle cx={cx} cy={cy} r={R*0.79} fill="url(#cFg)"/>
       <circle cx={cx} cy={cy} r={R*0.79} fill="url(#cEng)" opacity="0.15"/>
       <circle cx={cx} cy={cy} r={R*0.79} fill="none" stroke="#5a3a10" strokeWidth="1.5"/>
-      {Array.from({length:18},(_,i)=>{ const frac=i/60, a=-Math.PI/2+frac*Math.PI*2; return <line key={i} x1={cx+Math.cos(a)*R*0.40} y1={cy+Math.sin(a)*R*0.40} x2={cx+Math.cos(a)*R*0.79} y2={cy+Math.sin(a)*R*0.79} stroke={`rgba(230,48,32,${0.06-frac*0.003})`} strokeWidth="5"/>; })}
-      {[0.64,0.50,0.36].map((r,i) => <circle key={i} cx={cx} cy={cy} r={R*r} fill="none" stroke="#2a1a06" strokeWidth="0.5"/>)}
-      {markers.map((m,i) => <line key={i} x1={m.x1} y1={m.y1} x2={m.x2} y2={m.y2} stroke={m.zero?"#e63020":m.major?"#6b4a1a":"#2a1a06"} strokeWidth={m.zero?2:m.major?1.5:0.5}/>)}
+      {Array.from({length:18},(_,i)=>{ const frac=i/60, a=-Math.PI/2+frac*Math.PI*2; return <line key={`r-${i}`} x1={cx+Math.cos(a)*R*0.40} y1={cy+Math.sin(a)*R*0.40} x2={cx+Math.cos(a)*R*0.79} y2={cy+Math.sin(a)*R*0.79} stroke={`rgba(230,48,32,${0.06-frac*0.003})`} strokeWidth="5"/>; })}
+      {[0.64,0.50,0.36].map((r,i) => <circle key={`ring-${i}`} cx={cx} cy={cy} r={R*r} fill="none" stroke="#2a1a06" strokeWidth="0.5"/>)}
+      {markers.map((m,i) => <line key={`mk-${i}`} x1={m.x1} y1={m.y1} x2={m.x2} y2={m.y2} stroke={m.zero?"#e63020":m.major?"#6b4a1a":"#2a1a06"} strokeWidth={m.zero?2:m.major?1.5:0.5}/>)}
       <text x={cx} y={cy-R*0.64} textAnchor="middle" dominantBaseline="middle" fill={C.gold} fontSize={R*0.076} fontFamily="Georgia,serif" letterSpacing="2">XII</text>
-      {[{l:"XI",a:-Math.PI/2-Math.PI/6},{l:"I",a:-Math.PI/2+Math.PI/6}].map((h,i) => <text key={i} x={cx+Math.cos(h.a)*R*0.62} y={cy+Math.sin(h.a)*R*0.62} textAnchor="middle" dominantBaseline="middle" fill={C.goldDim} fontSize={R*0.062} fontFamily="Georgia,serif">{h.l}</text>)}
+      {[{l:"XI",a:-Math.PI/2-Math.PI/6},{l:"I",a:-Math.PI/2+Math.PI/6}].map((h,i) => <text key={`hn-${i}`} x={cx+Math.cos(h.a)*R*0.62} y={cy+Math.sin(h.a)*R*0.62} textAnchor="middle" dominantBaseline="middle" fill={C.goldDim} fontSize={R*0.062} fontFamily="Georgia,serif">{h.l}</text>)}
       <text x={cx} y={cy-R*0.52} textAnchor="middle" dominantBaseline="middle" fill={C.grayDark} fontSize={R*0.030} fontFamily="Courier New,monospace" letterSpacing="3">MEIA-NOITE</text>
       <text x={cx} y={cy-R*0.17} textAnchor="middle" dominantBaseline="middle" fill={C.grayDark} fontSize={R*0.028} fontFamily="Courier New,monospace" letterSpacing="5">IT IS</text>
       <text x={cx} y={cy-R*0.055} textAnchor="middle" dominantBaseline="middle" fill={C.red} fontSize={R*0.082} fontFamily="Georgia,serif" fontWeight="bold" style={{transition:"all 1.5s ease"}}>{seconds}s</text>
@@ -240,7 +233,11 @@ function DailyClock({ ms }) {
   const pct = (ms / 86400000) * 100;
   const urgency = pct < 10;
   const survived = ms <= 500;
-  useEffect(() => { const i = setInterval(() => setBlink(b => !b), 500); return () => clearInterval(i); }, []);
+
+  useEffect(() => {
+    const i = setInterval(() => setBlink(b => !b), 500);
+    return () => clearInterval(i);
+  }, []);
 
   return (
     <div style={{ border: `1px solid ${urgency ? C.red+"88" : C.border}`, background: urgency ? "#150300" : C.bgCard, padding: "18px", width: "100%" }}>
@@ -279,7 +276,12 @@ function DailyClock({ ms }) {
 function HeartbeatCounters({ sinceMs, untilMs }) {
   const since = fmtDuration(sinceMs), until = fmtDuration(untilMs);
   const [beat, setBeat] = useState(false);
-  useEffect(() => { const t = setInterval(() => { setBeat(true); setTimeout(() => setBeat(false), 180); }, 1200); return () => clearInterval(t); }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => { setBeat(true); setTimeout(() => setBeat(false), 180); }, 1200);
+    return () => clearInterval(t);
+  }, []);
+
   const totalSpan = NEXT_REVIEW_DATE.getTime() - AGGRAVATION_DATE.getTime();
   const reviewPct = Math.min(100, ((totalSpan - untilMs) / totalSpan) * 100);
 
@@ -328,11 +330,15 @@ function NewsTicker({ text }) {
   const ref = useRef(null);
   const [pos, setPos] = useState(400);
   const [w, setW] = useState(0);
-  useEffect(() => { if (ref.current) setW(ref.current.scrollWidth); }, [text]);
+
+  useEffect(() => {
+    if (ref.current) setW(ref.current.scrollWidth);
+  }, [text]);
+
   useEffect(() => {
     if (!w) return;
-    let x = window.innerWidth || 400;
-    const t = setInterval(() => { x -= 0.8; if (x < -w) x = window.innerWidth || 400; setPos(x); }, 16);
+    let x = typeof window !== "undefined" ? window.innerWidth : 400;
+    const t = setInterval(() => { x -= 0.8; if (x < -w) x = typeof window !== "undefined" ? window.innerWidth : 400; setPos(x); }, 16);
     return () => clearInterval(t);
   }, [w]);
 
@@ -410,7 +416,16 @@ function ViolenceMeter({ value = 73 }) {
           <svg width="200" height="110" viewBox="0 0 200 110">
             <path d="M 15 100 A 85 85 0 0 1 185 100" fill="none" stroke={C.bgDark} strokeWidth="18" strokeLinecap="round"/>
             <path d="M 15 100 A 85 85 0 0 1 185 100" fill="none" stroke={color} strokeWidth="16" strokeLinecap="round" strokeDasharray={`${(value/100)*267} 267`}/>
-            {(() => { const a=Math.PI-(value/100)*Math.PI; const nx=100+Math.cos(a)*76, ny=100-Math.sin(a)*76; return (<><line x1="100" y1="100" x2={nx} y2={ny} stroke={C.red} strokeWidth="3" strokeLinecap="round"/><circle cx="100" cy="100" r="7" fill={C.bgCard} stroke={C.gold} strokeWidth="2"/></>); })()}
+            {(() => {
+              const a = Math.PI-(value/100)*Math.PI;
+              const nx = 100+Math.cos(a)*76, ny = 100-Math.sin(a)*76;
+              return (
+                <>
+                  <line x1="100" y1="100" x2={nx} y2={ny} stroke={C.red} strokeWidth="3" strokeLinecap="round"/>
+                  <circle cx="100" cy="100" r="7" fill={C.bgCard} stroke={C.gold} strokeWidth="2"/>
+                </>
+              );
+            })()}
             <text x="100" y="90" textAnchor="middle" fill={color} fontSize="28" fontFamily="Georgia,serif" fontWeight="bold">{value}</text>
             <text x="15" y="108" fill={C.grayDark} fontSize="10" fontFamily="Courier New,monospace">BAIXO</text>
             <text x="152" y="108" fill={C.grayDark} fontSize="10" fontFamily="Courier New,monospace">ALTO</text>
@@ -438,7 +453,7 @@ function ViolenceMeter({ value = 73 }) {
       </div>
       <div style={{ border: `1px solid ${C.border}`, background: C.bgCard, padding: "14px 16px" }}>
         <div style={{ fontSize: 12, color: C.grayDim, fontFamily: "Courier New,monospace", lineHeight: 1.8 }}>
-          ◈ Índice calculado por IA com base em análise de notícias públicas. Não representa dado oficial. Atualizado a cada consulta ao Oráculo.
+          ◈ Índice calculado por IA com base em análise de notícias públicas. Não representa dado oficial.
         </div>
       </div>
     </div>
@@ -446,7 +461,7 @@ function ViolenceMeter({ value = 73 }) {
 }
 
 // ═══════════════════════════════════════════
-// API KEY CONFIG BANNER
+// API KEY BANNER
 // ═══════════════════════════════════════════
 function ApiKeyBanner({ apiKey, onSave, onClear, error }) {
   const [show, setShow] = useState(false);
@@ -480,9 +495,9 @@ function ApiKeyBanner({ apiKey, onSave, onClear, error }) {
 }
 
 // ═══════════════════════════════════════════
-// MAIN APP
+// MAIN PAGE COMPONENT
 // ═══════════════════════════════════════════
-export default function App() {
+export default function Page() {
   const [seconds, setSeconds] = useState(OFFICIAL_S);
   const [previsoes, setPrevisoes] = useState([]);
   const [veredicto, setVeredicto] = useState("");
@@ -492,42 +507,52 @@ export default function App() {
   const [glitch, setGlitch] = useState(false);
   const [pulse, setPulse] = useState(false);
   const [activeIdx, setActiveIdx] = useState(null);
-  const [midMs, setMidMs] = useState(getMidMs());
-  const [sinceMs, setSinceMs] = useState(Date.now() - AGGRAVATION_DATE.getTime());
-  const [untilMs, setUntilMs] = useState(NEXT_REVIEW_DATE.getTime() - Date.now());
+  const [midMs, setMidMs] = useState(0);
+  const [sinceMs, setSinceMs] = useState(0);
+  const [untilMs, setUntilMs] = useState(0);
   const [consultas, setConsultas] = useState([]);
   const [phase, setPhase] = useState("idle");
   const [oracMsg, setOracMsg] = useState("");
   const [page, setPage] = useState("relogio");
-
-  // ── Chave API — salva no localStorage ──
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem("doomsday_api_key") || "");
+  const [apiKey, setApiKey] = useState("");
   const [apiError, setApiError] = useState("");
+  const [mounted, setMounted] = useState(false);
 
-  function handleSaveKey(key) {
-    setApiKey(key);
-    localStorage.setItem("doomsday_api_key", key);
-  }
-  function handleClearKey() {
-    setApiKey("");
-    localStorage.removeItem("doomsday_api_key");
-  }
+  // Evita hydration mismatch — inicializa dados de tempo apenas no cliente
+  useEffect(() => {
+    setMounted(true);
+    setMidMs(getMidMs());
+    setSinceMs(Date.now() - AGGRAVATION_DATE.getTime());
+    setUntilMs(NEXT_REVIEW_DATE.getTime() - Date.now());
+    const savedKey = localStorage.getItem("doomsday_api_key") || "";
+    setApiKey(savedKey);
+  }, []);
 
   useEffect(() => {
+    if (!mounted) return;
     const t = setInterval(() => {
       setMidMs(getMidMs());
       setSinceMs(Date.now() - AGGRAVATION_DATE.getTime());
       setUntilMs(NEXT_REVIEW_DATE.getTime() - Date.now());
     }, 40);
     return () => clearInterval(t);
-  }, []);
+  }, [mounted]);
 
   useEffect(() => {
     const t = setInterval(() => { setPulse(true); setTimeout(() => setPulse(false), 180); }, 1200);
     return () => clearInterval(t);
   }, []);
 
-  // ── Consulta principal ──
+  function handleSaveKey(key) {
+    setApiKey(key);
+    if (typeof window !== "undefined") localStorage.setItem("doomsday_api_key", key);
+  }
+
+  function handleClearKey() {
+    setApiKey("");
+    if (typeof window !== "undefined") localStorage.removeItem("doomsday_api_key");
+  }
+
   async function consult() {
     if (loading) return;
     setLoading(true);
@@ -537,21 +562,17 @@ export default function App() {
     setOracMsg(LOADING_MSGS[Math.floor(Math.random() * LOADING_MSGS.length)]);
 
     let r = null;
-
     try {
       if (apiKey) {
-        // Chama a API da Anthropic diretamente
         r = await callAnthropicOracle(apiKey);
       } else {
-        // Sem chave: usa dados de demonstração
         r = MOCK;
       }
     } catch (e) {
-      setApiError(`Erro na API: ${e.message}. Usando dados de demonstração.`);
+      setApiError(`Erro na API: ${e instanceof Error ? e.message : String(e)}. Usando dados de demonstração.`);
       r = MOCK;
     }
 
-    // Aplica resultado
     const newS = Math.max(10, Math.min(HOUR_S - 10, seconds + (r.ajuste_segundos || 0)));
     if (r.ticker) setTickerText(r.ticker.toUpperCase());
     if (r.violencia_br) setViolencia(r.violencia_br);
@@ -582,6 +603,14 @@ export default function App() {
     };
   }
 
+  if (!mounted) {
+    return (
+      <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: C.goldDim, fontFamily: "Courier New,monospace", letterSpacing: 4, fontSize: 14 }}>INICIALIZANDO...</div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.gray, fontFamily: "Georgia,Times New Roman,serif", overflowX: "hidden", width: "100%" }}>
       <style>{`
@@ -599,7 +628,7 @@ export default function App() {
 
       <div style={{ position: "relative", zIndex: 2, width: "100%" }}>
 
-        {/* ── HEADER ── */}
+        {/* HEADER */}
         <header style={{ background: "rgba(10,8,4,0.98)", borderBottom: `1px solid ${C.border}`, width: "100%" }}>
           <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 16px" }}>
             <div style={{ borderBottom: `1px solid ${C.bgDark}`, padding: "7px 0", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 4 }}>
@@ -621,7 +650,7 @@ export default function App() {
               </div>
             </div>
             <nav style={{ display: "flex", gap: 0, borderTop: `1px solid ${C.bgDark}`, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-              {["relogio","oraculo","violencia","loja"].map(p => (
+              {(["relogio","oraculo","violencia","loja"]).map(p => (
                 <button key={p} onClick={() => setPage(p)} style={navBtn(p)}>
                   {p==="relogio"?"RELÓGIO":p==="oraculo"?"ORÁCULO":p==="violencia"?"TERMÔMETRO BR":"BUNKER STORE"}
                 </button>
@@ -634,15 +663,9 @@ export default function App() {
 
         <main style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 16px 80px", width: "100%" }}>
 
-          {/* ── Banner de configuração da chave API ── */}
-          <ApiKeyBanner
-            apiKey={apiKey}
-            onSave={handleSaveKey}
-            onClear={handleClearKey}
-            error={apiError}
-          />
+          <ApiKeyBanner apiKey={apiKey} onSave={handleSaveKey} onClear={handleClearKey} error={apiError}/>
 
-          {/* ══ RELÓGIO ══ */}
+          {/* RELÓGIO */}
           {page === "relogio" && (
             <div>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
@@ -673,7 +696,7 @@ export default function App() {
                   <div style={{ fontSize: 14, color: C.gray, fontStyle: "italic", lineHeight: 1.7, borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>"{veredicto}"</div>
                 ) : (
                   <div style={{ fontSize: 14, color: C.grayDim, lineHeight: 1.7, borderTop: `1px solid ${C.bgDark}`, paddingTop: 14 }}>
-                    Baseado na leitura oficial de <span style={{ color: C.red }}>85 segundos</span> (Jan 2026). Numa escala de 1 hora = 100 anos, a humanidade tem <span style={{ color: C.red }}>{yl.toFixed(1)} anos</span> antes do ponto de não-retorno.
+                    Baseado na leitura oficial de <span style={{ color: C.red }}>85 segundos</span> (Jan 2026). A humanidade tem <span style={{ color: C.red }}>{yl.toFixed(1)} anos</span> antes do ponto de não-retorno.
                   </div>
                 )}
               </div>
@@ -702,9 +725,7 @@ export default function App() {
               </div>
 
               <HeartbeatCounters sinceMs={sinceMs} untilMs={untilMs}/>
-              <div style={{ marginTop: 12 }}>
-                <DailyClock ms={midMs}/>
-              </div>
+              <div style={{ marginTop: 12 }}><DailyClock ms={midMs}/></div>
 
               <div style={{ border: `1px solid ${C.border}`, background: C.bgCard, padding: "16px", marginTop: 12 }}>
                 <div style={{ fontSize: 13, letterSpacing: 3, color: C.goldDim, fontFamily: "Courier New,monospace", marginBottom: 14 }}>REFERÊNCIA HISTÓRICA OFICIAL</div>
@@ -739,7 +760,7 @@ export default function App() {
             </div>
           )}
 
-          {/* ══ ORÁCULO ══ */}
+          {/* ORÁCULO */}
           {page === "oraculo" && (
             <div>
               <div style={{ fontSize: 13, letterSpacing: 5, color: C.goldDim, fontFamily: "Courier New,monospace", marginBottom: 20 }}>◈ PREVISÕES DO ALGORITMO CRONOS</div>
@@ -774,7 +795,7 @@ export default function App() {
             </div>
           )}
 
-          {/* ══ VIOLÊNCIA ══ */}
+          {/* VIOLÊNCIA */}
           {page === "violencia" && (
             <div>
               <div style={{ fontSize: 13, letterSpacing: 5, color: C.goldDim, fontFamily: "Courier New,monospace", marginBottom: 10 }}>◈ TERMÔMETRO DA VIOLÊNCIA · BRASIL</div>
@@ -785,7 +806,7 @@ export default function App() {
             </div>
           )}
 
-          {/* ══ LOJA ══ */}
+          {/* LOJA */}
           {page === "loja" && (
             <div>
               <div style={{ fontSize: 13, letterSpacing: 5, color: C.goldDim, fontFamily: "Courier New,monospace", marginBottom: 10 }}>◈ BUNKER STORE</div>
@@ -799,9 +820,7 @@ export default function App() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 14, marginBottom: 32 }}>
                 {EBOOKS.map(b => (
                   <a key={b.id} href={b.link} target="_blank" rel="noopener noreferrer"
-                    style={{ border: `1px solid ${C.border}`, background: C.bgCard, padding: "20px", position: "relative", display: "block", transition: "border 0.2s, transform 0.2s" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = C.red+"66"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}>
+                    style={{ border: `1px solid ${C.border}`, background: C.bgCard, padding: "20px", position: "relative", display: "block", transition: "border 0.2s, transform 0.2s" }}>
                     {b.badge && <div style={{ position: "absolute", top: 12, right: 12, fontSize: 10, letterSpacing: 2, padding: "3px 8px", background: C.red+"22", border: `1px solid ${C.red}`, color: C.red, fontFamily: "Courier New,monospace" }}>{b.badge}</div>}
                     <div style={{ fontSize: 34, marginBottom: 12 }}>{b.icon}</div>
                     <div style={{ fontSize: 17, fontWeight: 700, color: C.white, marginBottom: 5 }}>{b.title}</div>
@@ -823,9 +842,7 @@ export default function App() {
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 32 }}>
                 {AFFILIATES.map((a, i) => (
                   <a key={i} href={a.link} target="_blank" rel="noopener noreferrer"
-                    style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: C.bgCard, border: `1px solid ${C.border}`, transition: "border 0.2s" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = C.red+"55"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; }}>
+                    style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: C.bgCard, border: `1px solid ${C.border}`, transition: "border 0.2s" }}>
                     <span style={{ fontSize: 22, flexShrink: 0 }}>{a.icon}</span>
                     <span style={{ fontSize: 11, letterSpacing: 2, padding: "3px 8px", border: `1px solid ${C.border}`, color: C.grayDim, fontFamily: "Courier New,monospace", flexShrink: 0 }}>{a.cat}</span>
                     <span style={{ flex: 1, fontSize: 15, color: C.white }}>{a.name}</span>
