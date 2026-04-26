@@ -480,7 +480,7 @@ function ApiKeyBanner({ apiKey, onSave, onClear, error }) {
         <div style={{ display: "flex", gap: 6, flex: 1, flexWrap: "wrap" }}>
           <input
             type="password"
-            placeholder="sk-ant-..."
+            placeholder="AIza..."
             value={draft}
             onChange={e => setDraft(e.target.value)}
             style={{ flex: 1, minWidth: 200, background: C.bgDark, border: `1px solid ${C.border}`, color: C.white, fontFamily: "Courier New,monospace", fontSize: 12, padding: "6px 10px", outline: "none" }}
