@@ -207,15 +207,28 @@ export default function App() {
   }, []);
 
   async function consult() {
-    if (loading) return; setLoading(true);
+    if (loading) return;
+    setLoading(true);
     try {
       const res = await fetch("/api/oracle", { method: "POST" });
       const r = await res.json();
-      setPrevisoes(r.previsoes || MOCK.previsoes);
-      setVeredicto(r.veredicto || MOCK.veredicto);
-      setTickerText(r.ticker || MOCK.ticker);
-      setSeconds(s => s + (r.ajuste_segundos || 0));
-    } catch { setPrevisoes(MOCK.previsoes); } finally { setLoading(false); }
+      
+      // SÓ ATUALIZA SE A IA REALMENTE ENVIOU PREVISÕES
+      if (r && r.previsoes && r.previsoes.length > 0) {
+        setPrevisoes(r.previsoes);
+        setVeredicto(r.veredicto || MOCK.veredicto);
+        setTickerText(r.ticker || MOCK.ticker);
+        setSeconds(s => s + (r.ajuste_segundos || 0));
+      } else {
+        // Se a IA responder vazio, volta para o Mock (apresentação)
+        setPrevisoes(MOCK.previsoes);
+      }
+    } catch (e) {
+      console.error("Erro ao consultar:", e);
+      setPrevisoes(MOCK.previsoes);
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (!mounted) return null;
