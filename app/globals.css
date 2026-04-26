@@ -1,26 +1,502 @@
-@import "tailwindcss";
+/* ═══════════════════════════════════════════════════════════
+   RELÓGIO DO APOCALIPSE — TEMA DARK GOTHIC / VICTORIAN
+   Paleta: Charcoal · Bronze Envelhecido · Creme Fosco
+   ═══════════════════════════════════════════════════════════ */
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Special+Elite&display=swap');
+
+/* ─── DARK THEME (default) ─── */
+:root,
+[data-theme="dark"] {
+  --bg-primary:       #0e0c0a;
+  --bg-secondary:     #151210;
+  --bg-card:          #110f0d;
+  --bg-overlay:       rgba(14, 12, 10, 0.92);
+
+  --border-subtle:    #2e2218;
+  --border-mid:       #4a3220;
+  --border-strong:    #6b4a22;
+  --border-glow:      #9a6a30;
+
+  --bronze-light:     #c8862a;
+  --bronze-mid:       #a06820;
+  --bronze-dark:      #6a4010;
+  --bronze-glow:      rgba(200, 134, 42, 0.25);
+
+  --cream:            #e8dcc8;
+  --cream-dim:        #b8a888;
+  --cream-muted:      #786848;
+
+  --red-alarm:        #cc2810;
+  --red-dim:          #8a1808;
+  --red-glow:         rgba(204, 40, 16, 0.3);
+
+  --text-primary:     #e0d4bc;
+  --text-secondary:   #a08868;
+  --text-muted:       #604838;
+  --text-inverse:     #0e0c0a;
+
+  --shadow-card:      0 4px 24px rgba(0,0,0,0.7), 0 1px 4px rgba(0,0,0,0.5);
+  --shadow-glow-bronze: 0 0 20px rgba(200, 134, 42, 0.2);
+  --shadow-glow-red:   0 0 20px rgba(204, 40, 16, 0.3);
+
+  --grain-opacity:    0.045;
+  --vignette-opacity: 0.6;
 }
 
-theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ─── LIGHT THEME ─── */
+[data-theme="light"] {
+  --bg-primary:       #f0e8d6;
+  --bg-secondary:     #e8dcc4;
+  --bg-card:          #ece4d0;
+  --bg-overlay:       rgba(240, 232, 214, 0.95);
+
+  --border-subtle:    #c8b890;
+  --border-mid:       #a89060;
+  --border-strong:    #806840;
+  --border-glow:      #604820;
+
+  --bronze-light:     #7a5010;
+  --bronze-mid:       #5a3808;
+  --bronze-dark:      #3a2005;
+  --bronze-glow:      rgba(122, 80, 16, 0.15);
+
+  --cream:            #2c2018;
+  --cream-dim:        #504030;
+  --cream-muted:      #907860;
+
+  --red-alarm:        #a01808;
+  --red-dim:          #7a1005;
+  --red-glow:         rgba(160, 24, 8, 0.2);
+
+  --text-primary:     #1e1408;
+  --text-secondary:   #4a3820;
+  --text-muted:       #806848;
+  --text-inverse:     #f0e8d6;
+
+  --shadow-card:      0 2px 16px rgba(60,40,10,0.18), 0 1px 4px rgba(60,40,10,0.1);
+  --shadow-glow-bronze: 0 0 20px rgba(122, 80, 16, 0.12);
+  --shadow-glow-red:   0 0 16px rgba(160, 24, 8, 0.2);
+
+  --grain-opacity:    0.03;
+  --vignette-opacity: 0.2;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── RESET & BASE ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'IM Fell English', Georgia, serif;
+  line-height: 1.7;
+  min-height: 100vh;
+  position: relative;
+  transition: background-color 0.4s ease, color 0.4s ease;
+  overflow-x: hidden;
+}
+
+/* ─── GRAIN TEXTURE OVERLAY ─── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  opacity: var(--grain-opacity);
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: overlay;
+}
+
+/* ─── VIGNETTE ─── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,var(--vignette-opacity)) 100%);
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* ─── TYPOGRAPHY ─── */
+h1, h2, h3 {
+  font-family: 'Cinzel Decorative', serif;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+}
+
+h4, h5, h6, .label-caps {
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.font-typewriter {
+  font-family: 'Special Elite', 'Courier New', monospace;
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb {
+  background: var(--bronze-dark);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--bronze-mid); }
+
+/* ─── THEME TOGGLE BUTTON ─── */
+.theme-toggle {
+  position: fixed;
+  top: 56px;
+  right: 16px;
+  z-index: 1000;
+  background: var(--bg-card);
+  border: 1px solid var(--border-mid);
+  color: var(--bronze-light);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+}
+.theme-toggle:hover {
+  border-color: var(--border-glow);
+  color: var(--bronze-glow);
+  box-shadow: var(--shadow-glow-bronze);
+}
+
+/* ─── CARDS ─── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(200,134,42,0.03) 0%, transparent 60%);
+  pointer-events: none;
+}
+.card:hover {
+  border-color: var(--border-mid);
+  box-shadow: var(--shadow-card), var(--shadow-glow-bronze);
+}
+
+/* ─── ORNAMENTAL DIVIDERS ─── */
+.ornament {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+  color: var(--bronze-mid);
+  font-size: 12px;
+  letter-spacing: 3px;
+}
+.ornament::before,
+.ornament::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-mid), transparent);
+}
+
+/* ─── BUTTONS ─── */
+.btn-primary {
+  width: 100%;
+  padding: 16px 24px;
+  background: transparent;
+  border: 1px solid var(--red-alarm);
+  color: var(--red-alarm);
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--red-alarm);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+  z-index: 0;
+}
+.btn-primary:hover::before { transform: scaleX(1); }
+.btn-primary:hover { color: var(--text-inverse); }
+.btn-primary span { position: relative; z-index: 1; }
+
+.btn-secondary {
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid var(--border-mid);
+  color: var(--bronze-light);
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+.btn-secondary:hover {
+  border-color: var(--bronze-light);
+  box-shadow: var(--shadow-glow-bronze);
+}
+
+/* ─── NEWS TICKER ─── */
+.ticker-bar {
+  background: #080402;
+  border-bottom: 1px solid var(--red-dim);
+  height: 36px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.ticker-label {
+  background: var(--red-alarm);
+  color: #fff;
+  padding: 0 16px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ticker-content {
+  color: var(--bronze-light);
+  font-family: 'Special Elite', monospace;
+  font-size: 12px;
+  white-space: nowrap;
+  animation: ticker-scroll 40s linear infinite;
+  padding-left: 100%;
+}
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+
+/* ─── CATEGORY BADGES ─── */
+.badge {
+  display: inline-block;
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 3px 10px;
+  border-width: 1px;
+  border-style: solid;
+  text-transform: uppercase;
+}
+
+/* ─── NAVIGATION ─── */
+.nav-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 8px 0;
+  position: relative;
+  transition: color 0.3s ease;
+}
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--red-alarm);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+.nav-link.active::after,
+.nav-link:hover::after { transform: scaleX(1); }
+
+/* ─── COLLAPSE DATE DISPLAY ─── */
+.year-display {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: clamp(64px, 15vw, 100px);
+  font-weight: 900;
+  color: var(--red-alarm);
+  line-height: 1;
+  text-shadow: 0 0 40px var(--red-glow), 0 0 80px rgba(204,40,16,0.1);
+  letter-spacing: -0.02em;
+}
+
+/* ─── PROTOCOL SEAL ─── */
+.protocol-seal {
+  border: 1px solid var(--bronze-dark);
+  background: linear-gradient(135deg, rgba(200,134,42,0.04), transparent);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+}
+
+/* ─── BLOG CARD ─── */
+.blog-card {
+  display: block;
+  text-decoration: none;
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+.blog-card:hover { border-color: var(--border-strong) !important; }
+.blog-card-date {
+  font-family: 'Special Elite', monospace;
+  font-size: 11px;
+  color: var(--bronze-mid);
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+.blog-card-title {
+  font-family: 'Cinzel', serif;
+  font-size: 17px;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.blog-card-excerpt {
+  font-family: 'IM Fell English', serif;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  font-style: italic;
+}
+
+/* ─── SHOP PRODUCT CARD ─── */
+.product-card {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 12px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+.product-card:hover { border-color: var(--border-strong) !important; }
+.product-icon {
+  font-size: 32px;
+  margin-bottom: 4px;
+}
+.product-title {
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+.product-desc {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--text-secondary);
+  flex: 1;
+  line-height: 1.6;
+}
+.product-price {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 18px;
+  color: var(--red-alarm);
+  font-weight: 700;
+}
+.product-cta {
+  display: inline-block;
+  padding: 8px 16px;
+  border: 1px solid var(--red-alarm);
+  color: var(--red-alarm);
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-align: center;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+.product-cta:hover {
+  background: var(--red-alarm);
+  color: var(--text-inverse);
+}
+
+/* ─── MILISSECOND COUNTER ─── */
+.ms-counter {
+  font-family: 'Special Elite', monospace;
+  font-size: clamp(10px, 2.5vw, 14px);
+  color: var(--bronze-mid);
+  letter-spacing: 1px;
+  opacity: 0.8;
+}
+.ms-frenetic {
+  animation: flicker 0.08s step-end infinite;
+}
+@keyframes flicker {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.5; }
+}
+
+/* ─── EOD COUNTDOWN ─── */
+.eod-label {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--bronze-mid);
+  letter-spacing: 1px;
+}
+
+/* ─── TRANSITIONS ─── */
+.page-enter {
+  animation: pageIn 0.4s ease forwards;
+}
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── MERCADO PAGO BUTTON OVERRIDE ─── */
+.mp-checkout-btn {
+  width: 100%;
+  padding: 14px 24px;
+  background: var(--red-alarm);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  transition: background 0.3s ease;
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+}
+.mp-checkout-btn:hover { background: var(--red-dim); }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 640px) {
+  .theme-toggle { top: auto; bottom: 16px; right: 16px; }
+  .year-display { font-size: clamp(52px, 18vw, 80px); }
 }
