@@ -9,7 +9,7 @@ const MOCK = {
     {
       titulo: "ARSENAIS NUCLEARES EM EXPANSÃO",
       manchete_real: "Potências expandem ogivas sem tratados ativos",
-      interpretacao: "Três potências expandem arsenais simultaneamente. Probabilidade de conflito acidental: 34% em 18 anos.",
+      interpretacao: "Três potências expandem arsenais simultaneamente. Probabilidade de conflito acidental elevada.",
       impacto_anos: 3.2,
       categoria: "NUCLEAR",
       probabilidade: 72,
@@ -18,7 +18,7 @@ const MOCK = {
     {
       titulo: "IA MILITAR SEM APROVAÇÃO HUMANA",
       manchete_real: "Sistemas autônomos operam sem loop humano",
-      interpretacao: "Primeiro armamento autônomo com IA sem aprovação humana documentado. Tempo de escalada cai de 72h para 11 minutos.",
+      interpretacao: "Tempo de escalada reduzido drasticamente por algoritmos de combate.",
       impacto_anos: 4.7,
       categoria: "IA",
       probabilidade: 61,
@@ -27,7 +27,7 @@ const MOCK = {
     {
       titulo: "RECORDE DE TEMPERATURA GLOBAL",
       manchete_real: "2025 é o ano mais quente da história",
-      interpretacao: "Terceiro ano consecutivo de recordes absolutos. Colapso agrícola global revisado para 2041.",
+      interpretacao: "Colapso agrícola global revisado para períodos mais próximos.",
       impacto_anos: 2.1,
       categoria: "CLIMA",
       probabilidade: 89,
@@ -37,64 +37,63 @@ const MOCK = {
 };
 
 export async function POST() {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  // Agora usamos a chave do Gemini
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
     return NextResponse.json(MOCK);
   }
 
-  const systemPrompt = `Você é o Oráculo do Relógio do Juízo Final. Analise o estado atual do mundo em 2026 e retorne APENAS um JSON válido (sem markdown, sem texto extra) com esta estrutura:
+  const prompt = `Você é o Oráculo do Relógio do Juízo Final. Analise o estado atual do mundo em abril de 2026 e retorne APENAS um JSON válido com esta estrutura:
 {
   "success": true,
   "ajuste_segundos": <inteiro entre -5 e +10>,
-  "veredicto": "<frase dramática sobre o estado da civilização, máx 150 chars>",
-  "ticker": "<manchetes em MAIÚSCULAS separadas por ·, máx 200 chars>",
+  "veredicto": "<frase dramática, máx 150 chars>",
+  "ticker": "<manchetes em MAIÚSCULAS separadas por ·>",
   "violencia_br": <inteiro entre 50 e 95>,
   "previsoes": [
     {
       "titulo": "<TÍTULO EM MAIÚSCULAS>",
       "manchete_real": "<manchete plausível de 2025-2026>",
       "interpretacao": "<análise de 1-2 frases>",
-      "impacto_anos": <decimal entre -5 e +10>,
-      "categoria": "<NUCLEAR|CLIMA|IA|BIOLÓGICO|GEOPOLÍTICO|CÓSMICO>",
-      "probabilidade": <inteiro entre 40 e 95>,
-      "gravidade": <inteiro entre 5 e 10>
+      "impacto_anos": <decimal>,
+      "categoria": "NUCLEAR|CLIMA|IA|BIOLÓGICO|GEOPOLÍTICO|CÓSMICO",
+      "probabilidade": <inteiro>,
+      "gravidade": <inteiro>
     }
   ]
 }
-Gere exatamente 3 previsões baseadas em ameaças globais reais de 2025-2026. Seja dramático mas plausível.`;
+Gere exatamente 3 previsões. Não use markdown nem blocos de código.`;
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    // Endpoint do Gemini 1.5 Flash (rápido e eficiente para JSON)
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [
-          {
-            role: "user",
-            content: "Analise o estado global em abril de 2026 e gere o relatório do Oráculo.",
-          },
-        ],
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          response_mime_type: "application/json", // Força o Gemini a responder JSON puro
+        },
       }),
     });
 
     if (!response.ok) {
       const err = await response.json();
-      console.error("Anthropic API error:", err);
+      console.error("Gemini API error:", err);
       return NextResponse.json(MOCK);
     }
 
     const data = await response.json();
-    const text = data.content?.[0]?.text || "";
-    const clean = text.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(clean);
+    
+    // O Gemini retorna o texto dentro de uma estrutura específica
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const parsed = JSON.parse(text);
+    
     return NextResponse.json(parsed);
   } catch (error) {
     console.error("Oracle error:", error);
