@@ -1,102 +1,68 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 const MOCK = {
-  ajuste_segundos: 7,
-  veredicto: "A convergência de ameaças nucleares, colapso climático e IA não regulada cria vetor de extinção sem precedentes históricos.",
-  ticker: "ARSENAIS NUCLEARES EXPANDEM SIMULTANEAMENTE · IA MILITAR SEM SUPERVISÃO · TEMPERATURA GLOBAL BATE RECORDE",
-  violencia_br: 73,
+  ajuste_segundos: 5,
+  veredicto: "O Oráculo está em modo de segurança. A convergência de riscos globais permanece alta.",
+  ticker: "SISTEMA EM MODO DE SEGURANÇA · AGUARDANDO CONEXÃO ESTÁVEL",
+  violencia_br: 70,
   previsoes: [
-    {
-      titulo: "ARSENAIS NUCLEARES EM EXPANSÃO",
-      manchete_real: "Potências expandem ogivas sem tratados ativos",
-      interpretacao: "Três potências expandem arsenais simultaneamente. Probabilidade de conflito acidental elevada.",
-      impacto_anos: 3.2,
-      categoria: "NUCLEAR",
-      probabilidade: 72,
-      gravidade: 9,
-    },
-    {
-      titulo: "IA MILITAR SEM APROVAÇÃO HUMANA",
-      manchete_real: "Sistemas autônomos operam sem loop humano",
-      interpretacao: "Tempo de escalada reduzido drasticamente por algoritmos de combate.",
-      impacto_anos: 4.7,
-      categoria: "IA",
-      probabilidade: 61,
-      gravidade: 10,
-    },
-    {
-      titulo: "RECORDE DE TEMPERATURA GLOBAL",
-      manchete_real: "2025 é o ano mais quente da história",
-      interpretacao: "Colapso agrícola global revisado para períodos mais próximos.",
-      impacto_anos: 2.1,
-      categoria: "CLIMA",
-      probabilidade: 89,
-      gravidade: 8,
-    },
+    { titulo: "ALERTA DE SISTEMA", manchete_real: "Erro na conexão com a IA", interpretacao: "O Oráculo não conseguiu acessar os dados em tempo real.", impacto_anos: 1.0, categoria: "GEOPOLÍTICO", probabilidade: 50, gravidade: 5 }
   ],
 };
 
 export async function POST() {
-  // Agora usamos a chave do Gemini
   const apiKey = process.env.GEMINI_API_KEY;
 
-  if (!apiKey) {
-    return NextResponse.json(MOCK);
-  }
+  if (!apiKey) return NextResponse.json(MOCK);
 
-  const prompt = `Você é o Oráculo do Relógio do Juízo Final. Analise o estado atual do mundo em abril de 2026 e retorne APENAS um JSON válido com esta estrutura:
-{
-  "success": true,
-  "ajuste_segundos": <inteiro entre -5 e +10>,
-  "veredicto": "<frase dramática, máx 150 chars>",
-  "ticker": "<manchetes em MAIÚSCULAS separadas por ·>",
-  "violencia_br": <inteiro entre 50 e 95>,
-  "previsoes": [
-    {
-      "titulo": "<TÍTULO EM MAIÚSCULAS>",
-      "manchete_real": "<manchete plausível de 2025-2026>",
-      "interpretacao": "<análise de 1-2 frases>",
-      "impacto_anos": <decimal>,
-      "categoria": "NUCLEAR|CLIMA|IA|BIOLÓGICO|GEOPOLÍTICO|CÓSMICO",
-      "probabilidade": <inteiro>,
-      "gravidade": <inteiro>
-    }
-  ]
-}
-Gere exatamente 3 previsões. Não use markdown nem blocos de código.`;
+  const prompt = `Aja como o Oráculo do Relógio do Juízo Final. Analise o mundo em 2026. 
+  Retorne APENAS um JSON puro (sem markdown) neste formato:
+  {
+    "success": true,
+    "ajuste_segundos": 7,
+    "veredicto": "frase curta dramática",
+    "ticker": "MANCHETES SEPARADAS POR ·",
+    "violencia_br": 75,
+    "previsoes": [
+      { "titulo": "TÍTULO", "manchete_real": "notícia", "interpretacao": "análise", "impacto_anos": 2.1, "categoria": "NUCLEAR", "probabilidade": 80, "gravidade": 8 }
+    ]
+  }`;
 
   try {
-    // Endpoint do Gemini 1.5 Flash (rápido e eficiente para JSON)
+    // Usando o modelo 1.5-flash que é o mais compatível com contas gratuitas
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          response_mime_type: "application/json", // Força o Gemini a responder JSON puro
-        },
+        // Removi o generationConfig temporariamente para evitar o erro 400 de formato
+        safetySettings: [
+          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+        ]
       }),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const err = await response.json();
-      console.error("Gemini API error:", err);
+      console.error("Erro detalhado do Google:", JSON.stringify(data));
       return NextResponse.json(MOCK);
     }
 
-    const data = await response.json();
-    
-    // O Gemini retorna o texto dentro de uma estrutura específica
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const parsed = JSON.parse(text);
-    
-    return NextResponse.json(parsed);
+    // Limpa possíveis marcações de markdown que a IA possa ter colocado
+    const cleanJson = text.replace(/```json|```/g, "").trim();
+    return NextResponse.json(JSON.parse(cleanJson));
+
   } catch (error) {
-    console.error("Oracle error:", error);
+    console.error("Erro no Oráculo:", error);
     return NextResponse.json(MOCK);
   }
 }
