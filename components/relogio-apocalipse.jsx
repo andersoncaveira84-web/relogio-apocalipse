@@ -474,7 +474,7 @@ function ApiKeyBanner({ apiKey, onSave, onClear, error }) {
       </span>
       {!show ? (
         <button onClick={() => { setDraft(apiKey); setShow(true); }} style={{ background: "transparent", border: `1px solid ${C.border}`, color: C.grayDim, fontFamily: "Courier New,monospace", fontSize: 11, letterSpacing: 2, padding: "4px 10px", cursor: "pointer" }}>
-          {apiKey ? "TROCAR CHAVE API" : "INSERIR CHAVE API ANTHROPIC"}
+          {apiKey ? "TROCAR CHAVE API" : "INSERIR CHAVE API"}
         </button>
       ) : (
         <div style={{ display: "flex", gap: 6, flex: 1, flexWrap: "wrap" }}>
