@@ -206,25 +206,29 @@ export default function App() {
     return () => clearInterval(t);
   }, []);
 
-  async function consult() {
+ async function consult() {
     if (loading) return;
     setLoading(true);
+    setVeredicto("CONSULTANDO O DESTINO..."); // Feedback visual imediato
+
     try {
       const res = await fetch("/api/oracle", { method: "POST" });
       const r = await res.json();
       
-      // SÓ ATUALIZA SE A IA REALMENTE ENVIOU PREVISÕES
+      // Se a IA respondeu com sucesso (campo success: true ou se vierem previsões)
       if (r && r.previsoes && r.previsoes.length > 0) {
         setPrevisoes(r.previsoes);
-        setVeredicto(r.veredicto || MOCK.veredicto);
-        setTickerText(r.ticker || MOCK.ticker);
+        setVeredicto(r.veredicto);
+        setTickerText(r.ticker);
         setSeconds(s => s + (r.ajuste_segundos || 0));
+        console.log("IA sincronizada com sucesso!");
       } else {
-        // Se a IA responder vazio, volta para o Mock (apresentação)
-        setPrevisoes(MOCK.previsoes);
+        // Se houver erro, mostra o veredicto de erro que a rota enviou
+        setVeredicto(r.veredicto || "ERRO DESCONHECIDO");
+        setPrevisoes(MOCK.previsoes); // Mantém as antigas para não sumir tudo
       }
     } catch (e) {
-      console.error("Erro ao consultar:", e);
+      setVeredicto("FALHA CRÍTICA NA CONEXÃO.");
       setPrevisoes(MOCK.previsoes);
     } finally {
       setLoading(false);
