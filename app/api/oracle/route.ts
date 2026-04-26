@@ -1,146 +1,103 @@
 import { NextResponse } from "next/server";
 
-const FEEDS = [
-  "https://feeds.bbci.co.uk/portuguese/rss.xml",
-  "https://rss.dw.com/rdf/rss-port-all",
-  "https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.rss",
-];
-
-async function fetchRSS(url: string): Promise<string[]> {
-  try {
-    const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; Bot/1.0)" },
-      signal: AbortSignal.timeout(8000),
-    });
-    const text = await res.text();
-    const titles: string[] = [];
-    const regex = /<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/gi;
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      const title = match[1].trim();
-      if (title.length > 15 && !title.toLowerCase().includes("rss") && !title.toLowerCase().includes("feed")) {
-        titles.push(title);
-      }
-    }
-    return titles.slice(0, 5);
-  } catch {
-    return [];
-  }
-}
-
-const FALLBACK_RESPONSE = {
-  success: true,
-  ajuste_segundos: 6,
-  veredicto: "Múltiplos vetores de risco convergem simultaneamente — a civilização opera no limiar do colapso.",
-  ticker: "TENSÃO NUCLEAR EM ALTA · CLIMA FORA DE CONTROLE · IA SEM REGULAÇÃO · VIOLÊNCIA GLOBAL CRESCE",
-  violencia_br: 74,
+const MOCK = {
+  ajuste_segundos: 7,
+  veredicto: "A convergência de ameaças nucleares, colapso climático e IA não regulada cria vetor de extinção sem precedentes históricos.",
+  ticker: "ARSENAIS NUCLEARES EXPANDEM SIMULTANEAMENTE · IA MILITAR SEM SUPERVISÃO · TEMPERATURA GLOBAL BATE RECORDE",
+  violencia_br: 73,
   previsoes: [
     {
       titulo: "ARSENAIS NUCLEARES EM EXPANSÃO",
-      manchete_real: "Potências nucleares expandem arsenais sem tratados ativos",
-      interpretacao: "Três potências expandem arsenais simultaneamente pela primeira vez desde 1983. Modelos de conflito acidental indicam 34% de probabilidade em 18 anos.",
+      manchete_real: "Potências expandem ogivas sem tratados ativos",
+      interpretacao: "Três potências expandem arsenais simultaneamente. Probabilidade de conflito acidental: 34% em 18 anos.",
       impacto_anos: 3.2,
       categoria: "NUCLEAR",
       probabilidade: 72,
       gravidade: 9,
     },
     {
-      titulo: "TEMPERATURA GLOBAL BATE RECORDE",
-      manchete_real: "2025 é o ano mais quente já registrado na história",
-      interpretacao: "Terceiro ano consecutivo de recordes absolutos. Colapso agrícola global revisado para 2041, 9 anos antes da estimativa anterior do IPCC.",
-      impacto_anos: 2.8,
-      categoria: "CLIMA",
-      probabilidade: 89,
-      gravidade: 8,
-    },
-    {
-      titulo: "IA MILITAR SEM CONTROLE HUMANO",
-      manchete_real: "Sistemas autônomos operam sem aprovação humana",
-      interpretacao: "Primeiro armamento autônomo com IA sem loop de aprovação humana documentado. Em conflito real, tempo de escalada cai de 72h para 11 minutos.",
-      impacto_anos: 4.1,
+      titulo: "IA MILITAR SEM APROVAÇÃO HUMANA",
+      manchete_real: "Sistemas autônomos operam sem loop humano",
+      interpretacao: "Primeiro armamento autônomo com IA sem aprovação humana documentado. Tempo de escalada cai de 72h para 11 minutos.",
+      impacto_anos: 4.7,
       categoria: "IA",
       probabilidade: 61,
       gravidade: 10,
     },
+    {
+      titulo: "RECORDE DE TEMPERATURA GLOBAL",
+      manchete_real: "2025 é o ano mais quente da história",
+      interpretacao: "Terceiro ano consecutivo de recordes absolutos. Colapso agrícola global revisado para 2041.",
+      impacto_anos: 2.1,
+      categoria: "CLIMA",
+      probabilidade: 89,
+      gravidade: 8,
+    },
   ],
 };
 
-export async function POST(req: Request) {
+export async function POST() {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+
+  if (!apiKey) {
+    return NextResponse.json(MOCK);
+  }
+
+  const systemPrompt = `Você é o Oráculo do Relógio do Juízo Final. Analise o estado atual do mundo em 2026 e retorne APENAS um JSON válido (sem markdown, sem texto extra) com esta estrutura:
+{
+  "success": true,
+  "ajuste_segundos": <inteiro entre -5 e +10>,
+  "veredicto": "<frase dramática sobre o estado da civilização, máx 150 chars>",
+  "ticker": "<manchetes em MAIÚSCULAS separadas por ·, máx 200 chars>",
+  "violencia_br": <inteiro entre 50 e 95>,
+  "previsoes": [
+    {
+      "titulo": "<TÍTULO EM MAIÚSCULAS>",
+      "manchete_real": "<manchete plausível de 2025-2026>",
+      "interpretacao": "<análise de 1-2 frases>",
+      "impacto_anos": <decimal entre -5 e +10>,
+      "categoria": "<NUCLEAR|CLIMA|IA|BIOLÓGICO|GEOPOLÍTICO|CÓSMICO>",
+      "probabilidade": <inteiro entre 40 e 95>,
+      "gravidade": <inteiro entre 5 e 10>
+    }
+  ]
+}
+Gere exatamente 3 previsões baseadas em ameaças globais reais de 2025-2026. Seja dramático mas plausível.`;
+
   try {
-    const body = await req.json();
-    const action = body?.action;
-
-    if (action === "fetchNews") {
-      const results = await Promise.allSettled(FEEDS.map(fetchRSS));
-      const all: string[] = [];
-      for (const r of results) {
-        if (r.status === "fulfilled") {
-          all.push(...r.value);
-        }
-      }
-      const unique = [...new Set(all)].slice(0, 8);
-      return NextResponse.json({ headlines: unique });
-    }
-
-    if (action === "analyze") {
-      const headlines: string[] = body?.headlines || [];
-
-      if (!process.env.ANTHROPIC_API_KEY) {
-        return NextResponse.json(FALLBACK_RESPONSE);
-      }
-
-      const hl = headlines.length > 0
-        ? headlines.map((t, i) => `${i + 1}. ${t}`).join("\n")
-        : "Tensão nuclear global, mudanças climáticas, IA sem regulação";
-
-      let aiText = "";
-
-      try {
-        const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": process.env.ANTHROPIC_API_KEY,
-            "anthropic-version": "2023-06-01",
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [
+          {
+            role: "user",
+            content: "Analise o estado global em abril de 2026 e gere o relatório do Oráculo.",
           },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 1500,
-            system: `Você é o ALGORITMO CRONOS. Analise manchetes e calcule impacto no prazo de extinção humana. Responda SOMENTE com JSON válido, sem markdown, sem texto antes ou depois. O JSON deve ter exatamente esta estrutura: {"ajuste_segundos":5,"veredicto":"frase","ticker":"frase curta","violencia_br":70,"previsoes":[{"titulo":"TITULO","manchete_real":"manchete","interpretacao":"texto","impacto_anos":2.5,"categoria":"NUCLEAR","probabilidade":75,"gravidade":8}]}`,
-            messages: [{
-              role: "user",
-              content: `Analise estas manchetes:\n${hl}\n\nResponda apenas com o JSON, sem nenhum texto adicional.`,
-            }],
-          }),
-          signal: AbortSignal.timeout(25000),
-        });
+        ],
+      }),
+    });
 
-        const aiData = await aiRes.json();
-        aiText = aiData?.content?.[0]?.text || "";
-      } catch {
-        return NextResponse.json(FALLBACK_RESPONSE);
-      }
-
-      if (!aiText) {
-        return NextResponse.json(FALLBACK_RESPONSE);
-      }
-
-      try {
-        const clean = aiText.replace(/```json/gi, "").replace(/```/gi, "").trim();
-        const match = clean.match(/\{[\s\S]*\}/);
-        if (!match) {
-          return NextResponse.json(FALLBACK_RESPONSE);
-        }
-        const parsed = JSON.parse(match[0]);
-        return NextResponse.json({ success: true, ...parsed });
-      } catch {
-        return NextResponse.json(FALLBACK_RESPONSE);
-      }
+    if (!response.ok) {
+      const err = await response.json();
+      console.error("Anthropic API error:", err);
+      return NextResponse.json(MOCK);
     }
 
-    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-
-  } catch {
-    return NextResponse.json(FALLBACK_RESPONSE);
+    const data = await response.json();
+    const text = data.content?.[0]?.text || "";
+    const clean = text.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(clean);
+    return NextResponse.json(parsed);
+  } catch (error) {
+    console.error("Oracle error:", error);
+    return NextResponse.json(MOCK);
   }
 }
